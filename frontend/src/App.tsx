@@ -42,12 +42,12 @@ function App() {
     setShowUpdatePopup(true);
   };
 
-  const handleUpdateTodo = async (updatedTodo: Todo) => {
+  const handleUpdateTodo = async (updatedTodo: TodoForm) => {
     if (!todoToUpdate) return;
-
+  
     try {
       await updateTodo(todoToUpdate.id, updatedTodo);
-      const updatedTodos = todos.map(todo => (todo.id === todoToUpdate.id ? updatedTodo : todo));
+      const updatedTodos = todos.map(todo => (todo.id === todoToUpdate.id ? { ...updatedTodo, id: todo.id } : todo));
       setTodos(updatedTodos);
       setShowUpdatePopup(false);
       setTodoToUpdate(null);
@@ -89,13 +89,13 @@ function App() {
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6'>
         {todos.map(todo => (
-          <div key={todo.id} className='bg-white p-4 rounded-md shadow-md flex flex-col'>
+          <div key={todo.id} className={'bg-white p-4 rounded-md shadow-md flex flex-col'}>
             <div>
               <h2 className='text-xl font-bold'>{todo.title}</h2>
               <p className='text-gray-600'>{todo.description}</p>
             </div>
             <div className='flex-grow' />
-            <p className={`text-${todo.completed ? 'green' : 'red'}-500 font-bold mb-4`}>
+            <p className={`${todo.completed ? 'text-green-500' : 'text-red-500'} font-bold mb-4`}>
               {todo.completed ? 'Completed' : 'Not Completed'}
             </p>
             <div className='flex justify-between'>

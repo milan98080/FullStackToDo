@@ -21,7 +21,7 @@ export const createTodo = async (todo: TodoForm): Promise<Todo> => {
   return response.data.todo;
 };
 
-export const updateTodo = async (id: number, todo: Todo): Promise<Todo> => {
+export const updateTodo = async (id: number, todo: TodoForm): Promise<TodoForm> => {
   const response = await api.put(`/${id}`, todo);
   return response.data.todo;
 };
