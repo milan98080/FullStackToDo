@@ -18,7 +18,7 @@
     "typescript",
     "nodejs"
   ],
-  "author": "Binaya Baral <binaya.baral5@gmail.com>",
+  "author": "",
   "license": "MIT",
   "devDependencies": {
     "@types/cors": "^2.8.12",

@@ -6,7 +6,7 @@ import knexStringCase from "knex-stringcase";
 
 const knex = Knex(
   knexStringCase(
-    process.env.NODE_ENV === "prod" ? knexConfig.prod : knexConfig.local
+    process.env.NODE_ENV === "production" ? knexConfig.production : knexConfig.development
   )
 );
 

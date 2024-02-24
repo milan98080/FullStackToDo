@@ -6,7 +6,7 @@ dotenv.config({
 });
 
 const config: { [key: string]: Knex.Config } = {
-  locadevelopment: {
+  development: {
     client: process.env.DB_CLIENT,
     connection: {
       database: process.env.DB_NAME,
@@ -30,7 +30,7 @@ const config: { [key: string]: Knex.Config } = {
       user: process.env.DB_USER,
       host: process.env.DB_HOST,
       password: process.env.DB_PASSWORD,
-      ssl: { rejectUnauthorized: false },
+      ssl: false,
     },
     pool: {
       min: 2,
