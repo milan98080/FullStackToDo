@@ -6,7 +6,7 @@ dotenv.config({
 });
 
 const config: { [key: string]: Knex.Config } = {
-  local: {
+  locadevelopment: {
     client: process.env.DB_CLIENT,
     connection: {
       database: process.env.DB_NAME,
@@ -23,7 +23,7 @@ const config: { [key: string]: Knex.Config } = {
       tableName: "knex_migrations",
     },
   },
-  prod: {
+  production: {
     client: process.env.DB_CLIENT,
     connection: {
       database: process.env.DB_NAME,
