@@ -1,5 +1,5 @@
-FROM node:20-alpine3.19
-ENV NODE_ENV development
+# Build stage
+FROM node:20-alpine3.19 as build
 
 WORKDIR /app
 
@@ -9,8 +9,15 @@ RUN yarn
 
 COPY . .
 
-COPY /src/config/dev.apiconfig.ts /app/src/config/apiconfig.ts
+COPY /src/config/prod.apiconfig.ts /app/src/config/apiconfig.ts
 
-EXPOSE 5173
+RUN yarn build
 
-CMD [ "yarn", "dev", "--host", "0.0.0.0" ]
+# Prod stage
+FROM nginx:alpine as prod
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

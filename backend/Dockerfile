@@ -1,5 +1,7 @@
 FROM node:20-alpine3.19
 
+RUN apk add --no-cache curl
+
 WORKDIR /usr/src/app
 
 COPY package.json yarn.lock ./
