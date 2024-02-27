@@ -16,8 +16,7 @@ services:
       - database-backend
 
   backend-dev:
-    build:
-      context: ./backend
+    image: milan98080/todo-backend-dev:latest
     env_file:
       - ./backend/dev.env
     ports:
@@ -38,8 +37,7 @@ services:
       - database-backend
 
   backend-prod:
-    build:
-      context: ./backend
+    image: milan98080/todo-backend-prod:latest
     env_file:
       - ./backend/prod.env
     ports:
@@ -60,9 +58,7 @@ services:
       - database-backend
 
   frontend-dev:
-    build:
-      context: ./frontend
-      dockerfile: ./dev.Dockerfile
+    image: milan98080/todo-frontend-dev:latest
     ports:
       - "5173:5173"
     deploy:
@@ -71,9 +67,7 @@ services:
         condition: any
 
   frontend-prod:
-    build:
-      context: ./frontend
-      dockerfile: ./prod.Dockerfile
+    image: milan98080/todo-frontend-prod:latest
     ports:
       - "5000:80"
     deploy:
