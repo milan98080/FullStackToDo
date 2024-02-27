@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   database:
-    image: postgres:latest
+    image: milan98080/todo-database:latest
     env_file:
       - ./database/.env
     deploy:
