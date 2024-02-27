@@ -26,8 +26,6 @@ services:
       - database-backend
     depends_on:
       - database
-    volumes:
-      - ./backend:/usr/src/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
@@ -63,8 +61,6 @@ services:
       dockerfile: ./dev.Dockerfile
     ports:
       - "5173:5173"
-    volumes:
-      - ./frontend:/usr/src/app
     restart: always
 
   frontend-prod:
