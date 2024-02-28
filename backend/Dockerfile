@@ -1,27 +1,37 @@
-FROM node:20-alpine3.19
+FROM node:21-bookworm-slim AS base
 
-RUN apk add --no-cache curl
-
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-RUN yarn
+RUN yarn --frozen-lockfile
+
+FROM base AS linting
+
+COPY .eslint* ./
+COPY src ./src
+
+RUN yarn lint
+
+RUN rm -rf ./node_modules
+
+RUN yarn --frozen-lockfile --production
+
+FROM base AS build
 
 COPY . .
 
-RUN if [ "$NODE_ENV" = "production" ]; \
-    then cp prod.env .env; \
-    else cp dev.env .env; \
-    fi
+RUN yarn build
+
+FROM node:21-bookworm-slim AS production
+
+WORKDIR /app
+
+COPY --from=build /app/src/db ./src/db
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
 
-RUN yarn build
-
-
-CMD yarn migrate; \
-    if [ ${NODE_ENV} = "production" ]; \
-    then yarn start:production; \
-    else yarn start:development; \
-    fi
+CMD npx knex migrate:latest --knexfile src/db/knexfile.ts;\
+    node dist/index.js

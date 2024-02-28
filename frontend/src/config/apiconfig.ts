@@ -1,1 +1,1 @@
-export const apiURL = 'http://localhost:4000/todo';
+export const apiURL = process.env.BASE_URL || 'http://localhost:4000/todo';

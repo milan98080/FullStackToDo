@@ -1,13 +1,5 @@
 FROM postgres:latest
 
-COPY .env /usr/src/app/.env
-COPY init.sql /docker-entrypoint-initdb.d/
-
-ENV DEV_DB_NAME=${DEV_DB_NAME}
-ENV DEV_DB_USER=${DEV_DB_USER}
-ENV DEV_DB_PASSWORD=${DEV_DB_PASSWORD}
-ENV PROD_DB_NAME=${PROD_DB_NAME}
-ENV PROD_DB_USER=${PROD_DB_USER}
-ENV PROD_DB_PASSWORD=${PROD_DB_PASSWORD}
+COPY prod.sql /docker-entrypoint-initdb.d/
 
 EXPOSE 5432
