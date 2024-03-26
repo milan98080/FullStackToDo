@@ -31,19 +31,6 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
-        run: |
-          cd backend
-          npm version patch
-          cd ..
-          git add .
-          git commit -m "[skip ci] Bump version"
-          git push --follow-tags
-
       - name: Change Directory to Root
         run: cd ..
 
@@ -61,3 +48,13 @@ jobs:
 
       - name: Push Docker Image
         run: docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
+
+      - name: Bump Version
+        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
+        run: |
+          cd backend
+          npm version patch
+          cd ..
+          git add .
+          git commit -m "[skip ci] Bump version"
+          git push --follow-tags
