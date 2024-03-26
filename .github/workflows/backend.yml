@@ -38,12 +38,10 @@ jobs:
         if: ${{ steps.determine_branch.outputs.branch == 'main' }}
         run: |
           cd backend
-          git commit -m "[skip ci] Bump version"
-          git config --global user.email "mee.lawn222@gmail.com"
           npm version patch
           cd ..
           git add .
-          git config --global user.name "milan98080"
+          git commit -m "[skip ci] Bump version"
           git push --follow-tags
 
       - name: Change Directory to Root
