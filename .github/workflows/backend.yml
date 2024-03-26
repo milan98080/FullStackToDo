@@ -9,6 +9,7 @@ on:
     types:
       - closed
 
+
 jobs:
   build-and-push:
     runs-on: self-hosted
@@ -16,6 +17,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Change Directory to Backend
         run: cd backend
