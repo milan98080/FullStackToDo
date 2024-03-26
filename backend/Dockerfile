@@ -4,17 +4,6 @@ WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-RUN yarn --frozen-lockfile
-
-FROM base AS linting
-
-COPY .eslint* ./
-COPY src ./src
-
-RUN yarn lint
-
-RUN rm -rf ./node_modules
-
 RUN yarn --frozen-lockfile --production
 
 FROM base AS build
