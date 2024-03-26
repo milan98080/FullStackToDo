@@ -35,6 +35,7 @@ jobs:
       - name: Bump Version
         if: ${{ steps.determine_branch.outputs.branch == 'main' }}
         run: |
+          cd backend
           npm version patch
           git push --follow-tags
 
@@ -45,7 +46,9 @@ jobs:
         run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ./backend
+        run: |
+          cd backend
+          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ./backend
 
       - name: Tag Docker Image
         run: |
