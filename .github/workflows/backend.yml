@@ -6,44 +6,93 @@ on:
       - main
       - dev
 
+env:
+  GITHUB_EMAIL: ${{ secrets.GITHUB_EMAIL }}
+  GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+
 jobs:
-  build-and-push:
+  build-and-push-main:
     runs-on: self-hosted
-    
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Determine Branch
-        id: determine_branch
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-      
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '14' # Adjust version if needed
+
+      - name: Set Git Config
+        run: |
+          git config --global user.email "${GITHUB_EMAIL}"
+          git config --global user.name "${GITHUB_USERNAME}"
 
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
 
-      - name: Build Docker Image
+      - name: Build Docker Image for Main
         run: |
           cd backend
-          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} .
+          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:main .
+          docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:main ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:main-$(git rev-parse --short HEAD)
 
-      - name: Tag Docker Image
+      - name: Push Docker Image for Main
         run: |
-          docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:main
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:main-$(git rev-parse --short HEAD)
 
-      - name: Push Docker Image
+  build-and-push-dev:
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14' # Adjust version if needed
+
+      - name: Set Git Config
         run: |
-          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
-          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
+          git config --global user.email "${GITHUB_EMAIL}"
+          git config --global user.name "${GITHUB_USERNAME}"
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+
+      - name: Build Docker Image for Dev
+        run: |
+          cd backend
+          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:dev .
+          docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:dev ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:dev-$(git rev-parse --short HEAD)
+
+      - name: Push Docker Image for Dev
+        run: |
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:dev
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:dev-$(git rev-parse --short HEAD)
+
+  bump-version:
+    runs-on: self-hosted
+    needs: [build-and-push-main, build-and-push-dev]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Set Git Config
+        run: |
+          git config --global user.email "${GITHUB_EMAIL}"
+          git config --global user.name "${GITHUB_USERNAME}"
 
       - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
         run: |
           cd backend
           npm version patch
