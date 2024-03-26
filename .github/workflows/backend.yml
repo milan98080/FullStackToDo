@@ -17,10 +17,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Determine Branch
-        id: determine_branch
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-
       - name: Change Directory to Backend
         run: cd backend
       
@@ -32,9 +28,14 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Determine Branch
+        id: determine_branch
+        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+
       - name: Bump Version
         if: ${{ steps.determine_branch.outputs.branch == 'main' }}
         run: |
+          cd backend
           npm version patch
           git push --follow-tags
 
