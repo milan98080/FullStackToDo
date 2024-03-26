@@ -39,6 +39,7 @@ jobs:
         run: |
           cd backend
           npm version patch
+          cd ..
           git add package.json package-lock.json
           git commit -m "[skip ci] Bump version"
           git push --follow-tags
