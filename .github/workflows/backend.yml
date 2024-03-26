@@ -44,7 +44,9 @@ jobs:
           docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Push Docker Image
-        run: docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
+        run: |
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Bump Version
         if: ${{ steps.determine_branch.outputs.branch == 'main' }}
