@@ -50,7 +50,7 @@ jobs:
       - name: Build Docker Image
         run: |
           cd backend
-          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ./backend
+          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} .
 
       - name: Tag Docker Image
         run: |
