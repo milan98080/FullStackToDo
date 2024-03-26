@@ -9,7 +9,6 @@ on:
     types:
       - closed
 
-
 jobs:
   build-and-push:
     runs-on: self-hosted
@@ -17,8 +16,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Determine Branch
+        id: determine_branch
+        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
 
       - name: Change Directory to Backend
         run: cd backend
@@ -31,14 +32,9 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Determine Branch
-        id: determine_branch
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-
       - name: Bump Version
         if: ${{ steps.determine_branch.outputs.branch == 'main' }}
         run: |
-          cd backend
           npm version patch
           git push --follow-tags
 
@@ -49,11 +45,11 @@ jobs:
         run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
 
       - name: Build Docker Image
-        run: docker build -t <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }} .
+        run: docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ./backend
 
       - name: Tag Docker Image
         run: |
-          docker tag <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }} <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
+          docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Push Docker Image
-        run: docker push <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }}
+        run: docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
