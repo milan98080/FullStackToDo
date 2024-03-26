@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - dev
-  pull_request:
-    types:
-      - closed
 
 jobs:
   build-and-push:
@@ -15,37 +12,18 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Determine Branch
         id: determine_branch
         run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-
-      - name: Change Directory to Backend
-        run: cd backend
       
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
-        run: |
-          cd backend
-          npm version patch
-          cd ..
-          git add .
-          git commit -m "[skip ci] Bump version"
-          git push --follow-tags
-
-      - name: Change Directory to Root
-        run: cd ..
+          node-version: '20'
 
       - name: Login to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
@@ -60,4 +38,16 @@ jobs:
           docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Push Docker Image
-        run: docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
+        run: |
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
+          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
+
+      - name: Bump Version
+        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
+        run: |
+          cd backend
+          npm version patch
+          cd ..
+          git add .
+          git commit -m "[skip ci] Bump version"
+          git push --follow-tags
