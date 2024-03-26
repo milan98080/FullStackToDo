@@ -1,0 +1,55 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  build-and-push:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Change Directory to Backend
+        run: cd backend
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Determine Branch
+        id: determine_branch
+        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+
+      - name: Bump Version
+        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
+        run: |
+          npm version patch
+          git push --follow-tags
+
+      - name: Change Directory to Root
+        run: cd ..
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }} .
+
+      - name: Tag Docker Image
+        run: |
+          docker tag <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }} <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
+
+      - name: Push Docker Image
+        run: docker push <repository>/<image-name>:${{ steps.determine_branch.outputs.branch }}
