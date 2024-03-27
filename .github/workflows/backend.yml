@@ -58,7 +58,7 @@ jobs:
           docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
+        if: ${{ steps.determine_branch.outputs.branch == 'dev' }}
         run: |
           cd backend
           npm version patch
