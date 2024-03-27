@@ -20,16 +20,9 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Determine Branch and Set Output Name
+      - name: Determine Branch
         id: determine_branch
-        run: |
-          branch="${GITHUB_REF#refs/heads/}"
-          if [ "$branch" = "main" ]; then
-            echo "::set-output name=name::prod"
-          else
-            echo "::set-output name=name::${branch}"
-          fi
-
+        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
       
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -47,7 +40,13 @@ jobs:
       - name: Build Docker Image
         run: |
           cd backend
-          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} .
+          branch="${GITHUB_REF#refs/heads/}"
+          if [ "$branch" = "main" ]; then
+            docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:prod .
+          else
+            docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${branch} .
+          fi
+
 
       - name: Tag Docker Image
         run: |
@@ -59,7 +58,7 @@ jobs:
           docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'dev' }}
+        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
         run: |
           cd backend
           npm version patch
