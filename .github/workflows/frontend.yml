@@ -26,11 +26,8 @@ jobs:
         cd frontend
         npm install
         npm run build
-
-    - name: Move build output to dist directory
-      run: |
-        mkdir -p ${{ env.DIST }}  # Create dist directory
-        mv frontend/dist/* ${{ env.DIST }}  # Move build output to dist directory
+        mkdir -p ../$DIST  # Create dist directory in the root of the repository
+        mv dist/* ../$DIST  # Move dist output to dist directory
 
     - name: Archive dist directory
       uses: actions/upload-artifact@v2
@@ -62,7 +59,8 @@ jobs:
 
     - name: Copy files to the production website with the AWS CLI
       run: |
-        aws s3 sync --delete dist s3://${{ env.BUCKET }}
+        ls
+        aws s3 sync --delete * s3://${{ env.BUCKET }}
 
     - name: Invalidate CloudFront cache
       run: |
