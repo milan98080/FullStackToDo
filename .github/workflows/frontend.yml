@@ -1,55 +1,51 @@
-name: Upload to S3 and Serve on CloudFront
-
+---
+name: Build and Deploy React App to CloudFront
 on:
   push:
-    branches:
-      - main
-
+    branches: [ master ]
 jobs:
-  build:
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '14'
-          
-      - name: Install Dependencies
-        run: npm install
-        
-      - name: Build Frontend
-        run: npm run build
-
-  upload-to-s3:
-    needs: build
-    runs-on: ubuntu-latest
+    env:
+      BUCKET: ${{ vars.BUCKET }}
+      DIST: dist
+      REGION: us-east-1
+      DIST_ID: ${{ vars.DIST_ID }}
 
     steps:
-      - name: Change to frontend directory
-        run: cd frontend
-      
-      - name: Upload to S3
-        uses: jakejarvis/s3-sync-action@v4
-        with:
-          args: --delete
-        env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Checkout
+      uses: actions/checkout@v4
 
-  invalidate-cache:
-    needs: upload-to-s3
-    runs-on: ubuntu-latest
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.REGION }}
 
-    steps:
-      - name: Invalidate CloudFront Cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Set up Node.js  
+      uses: actions/setup-node@v4
+      with:
+         node-version: '20'
+
+    - name: go to frontend directory
+      run: cd frontend
+
+    - name: Install Dependencies
+      run: |
+        node --version
+        npm ci --production
+
+    - name: Build Static Website
+      run: npm run build
+
+    - name: Copy files to the production website with the AWS CLI
+      run: |
+        aws s3 sync --delete ${{ env.DIST }} s3://${{ env.BUCKET }}
+
+    - name: Copy files to the production website with the AWS CLI
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ env.DIST_ID }} \
+          --paths "/*"
