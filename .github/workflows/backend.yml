@@ -6,6 +6,10 @@ on:
       - main
       - dev
 
+env:
+  GIT_EMAIL: ${{ vars.GIT_EMAIL }}
+  GIT_USERNAME: ${{ vars.GIT_USERNAME }}
+
 jobs:
   build-and-push:
     runs-on: self-hosted
