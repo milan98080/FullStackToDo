@@ -9,20 +9,12 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env:
-      BUCKET: ${{ vars.BUCKET }}
       DIST: dist
       REGION: us-east-1
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.REGION }}
 
     - name: Set up Node.js  
       uses: actions/setup-node@v4
@@ -58,8 +50,6 @@ jobs:
 
     - name: Copy files to the production website with the AWS CLI
       run: |
-        ls
-        cd frontend 
         aws s3 sync --delete ${{ env.DIST }} s3://${{ env.BUCKET }}
 
     - name: Invalidate CloudFront cache
