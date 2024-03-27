@@ -26,6 +26,14 @@ jobs:
         cd frontend
         npm install
         npm run build
+        mkdir -p ../$DIST  # Create dist directory in the root of the repository
+        mv build/* ../$DIST  # Move build output to dist directory
+
+    - name: Archive dist directory
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: ${{ env.DIST }}
 
   deploy:
     name: Deploy
@@ -33,13 +41,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BUCKET: ${{ vars.BUCKET }}
-      DIST: dist
       REGION: us-east-1
       DIST_ID: ${{ vars.DIST_ID }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    - name: Download dist directory
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -50,7 +59,7 @@ jobs:
 
     - name: Copy files to the production website with the AWS CLI
       run: |
-        aws s3 sync --delete ${{ env.DIST }} s3://${{ env.BUCKET }}
+        aws s3 sync --delete dist s3://${{ env.BUCKET }}
 
     - name: Invalidate CloudFront cache
       run: |
