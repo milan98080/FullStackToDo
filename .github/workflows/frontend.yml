@@ -35,8 +35,7 @@ jobs:
     - name: Install Dependencies and Build
       run: |
         cd frontend
-        node --version
-        npm ci --production
+        npm install
         npm run build
 
     - name: Copy files to the production website with the AWS CLI
