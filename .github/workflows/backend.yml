@@ -40,7 +40,13 @@ jobs:
       - name: Build Docker Image
         run: |
           cd backend
-          docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} .
+          branch="${GITHUB_REF#refs/heads/}"
+          if [ "$branch" = "main" ]; then
+            docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:prod .
+          else
+            docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${branch} .
+          fi
+
 
       - name: Tag Docker Image
         run: |
@@ -52,11 +58,13 @@ jobs:
           docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
 
       - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'main' }}
+        if: ${{ steps.determine_branch.outputs.branch == 'dev' }}
         run: |
           cd backend
           npm version patch
           cd ..
+          git config --global user.email "mee.lawn222@gmail.com"
+          git config --global user.name "milan98080"
           git add .
           git commit -m "[skip ci] Bump version"
           git push --follow-tags
