@@ -79,7 +79,7 @@ function App() {
   return (
     <div className='w-full min-h-screen bg-gray-200 pt-16 px-8'>
       <div className='flex justify-between items-center mb-10'>
-        <h1 className='text-4xl font-bold'>TODO List</h1>
+        <h1 className='text-4xl font-bold'>TODO List Hosted with Github CI/CD</h1>
         <button
           className='bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 shadow-sm'
           onClick={() => setShowAddPopup(true)}
