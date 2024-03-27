@@ -2,9 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches:
-      - main
-      - dev
+    branches: [stable]
 
 env:
   GIT_EMAIL: ${{ vars.GIT_EMAIL }}
