@@ -27,7 +27,7 @@ jobs:
         npm install
         npm run build
         mkdir -p ../$DIST  # Create dist directory in the root of the repository
-        mv build/* ../$DIST  # Move build output to dist directory
+        mv dist/* ../$DIST  # Move dist output to dist directory
 
     - name: Archive dist directory
       uses: actions/upload-artifact@v2
