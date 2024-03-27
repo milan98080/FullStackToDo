@@ -32,15 +32,11 @@ jobs:
     - name: go to frontend directory
       run: cd frontend
 
-    - name: Install Dependencies
+    - name: Install Dependencies and Build
       run: |
         cd frontend
         node --version
         npm ci --production
-
-    - name: Build Static Website
-      run: |
-        cd frontend
         npm run build
 
     - name: Copy files to the production website with the AWS CLI
