@@ -1,11 +1,43 @@
 name: Build and Deploy React App to CloudFront
+
 on:
   push:
     branches: [ main ]
     
 jobs:
-  build-and-deploy:
-    name: Build and Deploy
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      BUCKET: ${{ vars.BUCKET }}
+      DIST: dist
+      REGION: us-east-1
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.REGION }}
+
+    - name: Set up Node.js  
+      uses: actions/setup-node@v4
+      with:
+         node-version: '20'
+
+    - name: Install Dependencies and Build
+      run: |
+        cd frontend
+        npm install
+        npm run build
+
+  deploy:
+    name: Deploy
+    needs: build
     runs-on: ubuntu-latest
     env:
       BUCKET: ${{ vars.BUCKET }}
@@ -24,26 +56,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.REGION }}
 
-    - name: Set up Node.js  
-      uses: actions/setup-node@v4
-      with:
-         node-version: '20'
-
-    - name: go to frontend directory
-      run: cd frontend
-
-    - name: Install Dependencies and Build
-      run: |
-        cd frontend
-        npm install
-        npm run build
-
     - name: Copy files to the production website with the AWS CLI
       run: |
         cd frontend
         aws s3 sync --delete ${{ env.DIST }} s3://${{ env.BUCKET }}
 
-    - name: Copy files to the production website with the AWS CLI
+    - name: Invalidate CloudFront cache
       run: |
         aws cloudfront create-invalidation \
           --distribution-id ${{ env.DIST_ID }} \
