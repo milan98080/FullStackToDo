@@ -37,7 +37,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "knex": "^2.4.0",
+    "knex": "^2.2.0",
+
     "knex-stringcase": "^1.4.6",
     "pg": "^8.11.3"
   }
