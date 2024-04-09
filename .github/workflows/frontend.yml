@@ -1,69 +1,44 @@
-name: Build and Deploy React App to CloudFront
+name: HawkScan
 
 on:
-  push:
-    branches: [ main ]
-    
+  push: 
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
-  build:
-    name: Build
+  build-and-test:
+    name: Build and Scan
     runs-on: ubuntu-latest
     env:
-      DIST: dist
-      REGION: us-east-1
-
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+      BRANCH_NAME: ${{ github.head_ref }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Set up Node.js  
-      uses: actions/setup-node@v4
-      with:
-         node-version: '20'
-
-    - name: Install Dependencies and Build
-      run: |
-        cd frontend
-        npm install
-        npm run build
-        mkdir -p ../$DIST  # Create dist directory in the root of the repository
-        mv dist/* ../$DIST  # Move dist output to dist directory
-
-    - name: Archive dist directory
-      uses: actions/upload-artifact@v2
-      with:
-        name: dist
-        path: ${{ env.DIST }}
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    env:
-      BUCKET: ${{ vars.BUCKET }}
-      REGION: us-east-1
-      DIST_ID: ${{ vars.DIST_ID }}
-
-    steps:
-    - name: Download dist directory
-      uses: actions/download-artifact@v2
-      with:
-        name: dist
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.REGION }}
-
-    - name: Copy files to the production website with the AWS CLI
-      run: |
-        ls
-        aws s3 sync --delete ./ s3://${{ env.BUCKET }}
-
-    - name: Invalidate CloudFront cache
-      run: |
-        aws cloudfront create-invalidation \
-          --distribution-id ${{ env.DIST_ID }} \
-          --paths "/*"
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: |
+              cp stackhawk.yml frontend/
+              cd frontend
+              npm install
+              npm run build
+              cd dist
+              pm2 start serve -n react-app -- --port 4000
+      - name: Run Vuln Node Express
+        run: |
+              cd frontend
+              npm run start:production &
+      - name: Run HawkScan
+        env:
+          HAWK_ENV: GitHub Actions
+        continue-on-error: true
+        uses: stackhawk/hawkscan-action@v2
+        with:
+          apiKey: ${{ secrets.HAWK_API_KEY }}
