@@ -24,7 +24,10 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm install
+        run: |
+              cp stackhawk.yml backend/
+              cd backend
+              npm install
       - name: Run Vuln Node Express
         run: npm run start &
       - name: Run HawkScan
