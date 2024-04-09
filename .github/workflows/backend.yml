@@ -1,62 +1,36 @@
-name: Build and Push Docker Image
+name: HawkScan
 
 on:
-  push:
-    branches: [stable]
-
-env:
-  GIT_EMAIL: ${{ vars.GIT_EMAIL }}
-  GIT_USERNAME: ${{ vars.GIT_USERNAME }}
+  push: 
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-push:
-    runs-on: self-hosted
-    
+  build-and-test:
+    name: Build and Scan
+    runs-on: ubuntu-latest
+    env:
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+      BRANCH_NAME: ${{ github.head_ref }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Node.js 20.x
+        uses: actions/setup-node@v3
         with:
-          token: ${{ secrets.GH_TOKEN }}
-
-      - name: Determine Branch
-        id: determine_branch
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Run Vuln Node Express
+        run: npm run start &
+      - name: Run HawkScan
+        env:
+          HAWK_ENV: GitHub Actions
+        continue-on-error: true
+        uses: stackhawk/hawkscan-action@v2
         with:
-          node-version: '20'
-
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-
-      - name: Build Docker Image
-        run: |
-          cd backend
-          branch="${GITHUB_REF#refs/heads/}"
-          if [ "$branch" = "main" ]; then
-            docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:prod .
-          else
-            docker build -t ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${branch} .
-          fi
-
-      - name: Tag Docker Image
-        run: |
-          docker tag ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }} ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
-
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}
-          docker push ${{ secrets.REPOSITORY }}/${{ secrets.IMAGE_NAME }}:${{ steps.determine_branch.outputs.branch }}-$(git rev-parse --short HEAD)
-
-      - name: Bump Version
-        if: ${{ steps.determine_branch.outputs.branch == 'dev' }}
-        run: |
-          cd backend
-          npm version patch
-          cd ..
-          git config --global user.email "${{ env.GIT_EMAIL }}"
-          git config --global user.name "${{ env.GIT_USERNAME }}"
-          git add .
-          git commit -m "[skip ci] Bump version"
-          git push --follow-tags
+          apiKey: ${{ secrets.HAWK_API_KEY }}
